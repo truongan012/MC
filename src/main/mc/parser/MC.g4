@@ -38,8 +38,7 @@ options{
 //=================================================================================================
 //RECONIZER
 //=================================================================================================
-program             : (INT | VOID) 'main'  LB RB LP body? RP EOF ;
-body                : varDecl+ | funcDecl+ | funcall;
+program             : varDecl* funcDecl* EOF ;
 
 varDecl             : primitiveTypes variables SEMICOLON;
 variables           : variable (COMMA variable)*;
@@ -49,15 +48,35 @@ funcDecl            : types ID LB paraList? RB blockStmt;
 paraList            : paraDecl (COMMA paraDecl)*;
 paraDecl            : primitiveTypes ID (LSB RSB)?;
 
-exp                 : funcall | INT_LIT ;
-funcall             : ID LB exp? RB SEMICOLON;
+expression          : LB expression RB
+                        | expression LSB expression RSB   //index operator
+                        | <assoc=right> (SUB_OP | NOT_OP) expression
+                        | <assoc=left> expression (MUL_OP | DIV_OP | MOD_OP) expression
+                        | <assoc=left> expression (ADD_OP | SUB_OP) expression
+                        | expression (LESS_OP | GREATER_OP | LESS_EQ_OP | GREATER_EQ_OP) expression
+                        | expression (EQ_OP | NEQ_OP) expression
+                        | <assoc=left> expression AND_OP expression
+                        | <assoc=left> expression OR_OP expression
+                        | <assoc=right> expression ASSIGN_OP expression
+                        | funcall
+                        | INT_LIT | FLT_LIT | STR_LIT | BOOL_LIT | ID;
+expList             : expression (COMMA expression)*;
+funcall             : ID LB expList? RB;
 
-returnStmt          : RETURN exp SEMICOLON;
-blockStmt           : LP RP;
+statement           : returnStmt | blockStmt | ifStmt | doWhileStmt
+                        | forStmt | breakStmt | continueStmt | expStmt;
+ifStmt              : IF LB expression RB statement ELSE statement;
+doWhileStmt         : DO statement+ WHILE expression SEMICOLON;
+forStmt             : FOR LB expression SEMICOLON expression SEMICOLON expression RB statement;
+breakStmt           : BREAK SEMICOLON;
+continueStmt        : CONTINUE SEMICOLON;
+returnStmt          : RETURN expression? SEMICOLON;
+expStmt             : expression SEMICOLON;
+blockStmt           : LP varDecl* statement* RP;
+
 types               : primitiveTypes | arrayPoinerTypes | VOID;
 primitiveTypes      : INT | BOOLEAN | FLOAT |STRING;
-arrayPoinerTypes    : primitiveTypes LSB RSB;
-arrayTypes          : primitiveTypes ID LSB RSB;
+arrayPoinerTypes    : primitiveTypes ID? LSB RSB ;
 
 //=================================================================================================
 //LEXER
@@ -131,8 +150,9 @@ FLT_LIT			: DIGIT+ DECIMAL DIGIT* | DECIMAL DIGIT+ | (DIGIT* DECIMAL)? DIGIT+ EX
 BOOL_LIT		: TRUE | FALSE;
 STR_LIT			: DB_QUOTE (ESC_CHAR | ~['"\\\r\n])* DB_QUOTE;
 //-------------------------------------------------------------------
+
 //String Errors Handling
-//-------------------------------------
+//-------------------------------------------------------------------
 ILLEGAL_ESCAPE	: DB_QUOTE (ESC_CHAR | ILL_ESC_CHAR | ~['"\\\r\n])* DB_QUOTE;
 UNCLOSE_STRING	: DB_QUOTE (ESC_CHAR | ~['"\\\r\n])*;
 
@@ -148,10 +168,10 @@ LINE_COMMENT	: '//' (~[\n])* ('\n' | EOF) -> skip;
 //-------------------------------------------------------------------
 
 //Characters set
-//-------------------------------------
+//-------------------------------------------------------------------
 WHITESPACE		: [ \f\t\r\n]+  -> skip; // skip spaces, tabs, newlines
 
-//Errors Handling
+//Errors Character Handling
 //-------------------------------------------------------------------
 ERROR_CHAR		: .;
 //-------------------------------------------------------------------
