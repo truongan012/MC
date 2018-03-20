@@ -59,24 +59,37 @@ returnStmt          : RETURN expression? SEMICOLON;
 expStmt             : expression SEMICOLON;
 blockStmt           : LP varDecl* statement* RP;
 
-types               : primitiveTypes | arrayPoinerTypes | VOID;
+types               : primitiveTypes (LSB RSB)? | VOID;
 primitiveTypes      : INT | BOOLEAN | FLOAT |STRING;
-arrayPoinerTypes    : primitiveTypes ID? LSB RSB ;
 
-expression          : LB expression RB
-                        | expression LSB expression RSB  //index operator
-                        | <assoc=right> (SUB_OP | NOT_OP) expression
-                        | <assoc=left> expression (MUL_OP | DIV_OP | MOD_OP) expression
-                        | <assoc=left> expression (ADD_OP | SUB_OP) expression
-                        | expression (LESS_OP | GREATER_OP | LESS_EQ_OP | GREATER_EQ_OP) expression //Not Allow a < b < c, to be check in semantic phase
-                        | expression (EQ_OP | NEQ_OP) expression //Not Allow a < b < c, to be check in semantic phase
-                        | <assoc=left> expression AND_OP expression
-                        | <assoc=left> expression OR_OP expression
-                        | <assoc=right> expression ASSIGN_OP expression
-                        | ID LB expList? RB //function call
-                        | INT_LIT | FLT_LIT | STR_LIT | BOOL_LIT | ID;
+expression          : expression1 ASSIGN_OP expression | expression1;
+expression1         : expression1 OR_OP expression2 | expression2;
+expression2         : expression2 AND_OP expression3 | expression3;
+expression3         : expression4 (EQ_OP | NEQ_OP) expression4 | expression4 ;
+expression4         : expression5 (LESS_OP | GREATER_OP | LESS_EQ_OP | GREATER_EQ_OP) expression5 | expression5;
+expression5         : expression5 (ADD_OP | SUB_OP) expression6 | expression6;
+expression6         : expression6 (MUL_OP | DIV_OP | MOD_OP) expression7 | expression7;
+expression7         : (SUB_OP | NOT_OP) expression7 | expression8;
+expression8         : expression9 LSB expression5 RSB | expression9; //index operator
+expression9         : ID LB expList? RB | expression10; //function call
+expression10        : LB expression RB | atomic;
+atomic              : INT_LIT | FLT_LIT | STR_LIT | BOOL_LIT | ID;
+
 expList             : expression (COMMA expression)*;
 
+/**expression_temp     : LB expression RB
+                     | expression LSB expression RSB  //index operator
+                     | <assoc=right> (SUB_OP | NOT_OP) expression
+                     | <assoc=left> expression (MUL_OP | DIV_OP | MOD_OP) expression
+                     | <assoc=left> expression (ADD_OP | SUB_OP) expression
+                     | expression (LESS_OP | GREATER_OP | LESS_EQ_OP | GREATER_EQ_OP) expression //Not Allow a < b < c, to be check in semantic phase
+                     | expression (EQ_OP | NEQ_OP) expression //Not Allow a < b < c, to be check in semantic phase
+                     | <assoc=left> expression AND_OP expression
+                     | <assoc=left> expression OR_OP expression
+                     | <assoc=right> expression ASSIGN_OP expression
+                     | ID LB expList? RB //function call
+                     | atomic;
+*/
 //=================================================================================================
 //LEXER
 //=================================================================================================
