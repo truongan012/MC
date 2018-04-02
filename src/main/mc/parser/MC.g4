@@ -38,7 +38,8 @@ options{
 //=================================================================================================
 //RECONIZER
 //=================================================================================================
-program             : (varDecl | funcDecl)+ EOF ;
+program             : declaration+ EOF ;
+declaration         : varDecl | funcDecl;
 
 varDecl             : primitiveTypes varList SEMICOLON;
 varList             : variable (COMMA variable)*;
