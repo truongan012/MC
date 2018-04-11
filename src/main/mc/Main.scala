@@ -19,7 +19,7 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.gui.TestRig
 
 import mc.parser._
-//import mc.astgen._
+import mc.astgen._
 //import mc.checker._
 //import mc.codegen._
 //import mc.utils._

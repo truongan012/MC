@@ -41,9 +41,8 @@ options{
 program             : declaration+ EOF ;
 declaration         : varDecl | funcDecl;
 
-varDecl             : primitiveTypes varList SEMICOLON;
-varList             : variable (COMMA variable)*;
-variable            : ID | ID LSB INT_LIT RSB;
+varDecl             : primitiveTypes variable (COMMA variable)* SEMICOLON;
+variable            : ID (LSB INT_LIT RSB)?;
 
 funcDecl            : types ID LB paraList? RB blockStmt;
 paraList            : paraDecl (COMMA paraDecl)*;
