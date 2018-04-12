@@ -18,10 +18,10 @@ class ASTGeneration extends MCBaseVisitor[Any] {
       ctx.declaration.asScala.toList.flatMap(_.accept(this).asInstanceOf[List[Decl]])
     )
 
-  override def visitDeclaration(ctx: DeclarationContext) =
+  override def visitDeclaration(ctx: DeclarationContext): Any =
     ctx.getChild(0).accept(this)
 
-  override def visitVarDecl(ctx: VarDeclContext) =
+  override def visitVarDecl(ctx: VarDeclContext): List[VarDecl] =
     ctx.variable.asScala.toList
       .map(_.accept(this).asInstanceOf[(Id, IntLiteral)])
       .map(x => VarDecl(x._1,
@@ -30,7 +30,7 @@ class ASTGeneration extends MCBaseVisitor[Any] {
         else ctx.primitiveTypes.accept(this).asInstanceOf[Type])
       )
 
-  override def visitVariable(ctx: VariableContext) =
+  override def visitVariable(ctx: VariableContext): (Id, Product with Serializable) =
     (Id(ctx.ID.getText), if (ctx.INT_LIT != null) IntLiteral(ctx.INT_LIT.getText.toInt) else None)
 
   override def visitFuncDecl(ctx: FuncDeclContext) =
@@ -43,7 +43,7 @@ class ASTGeneration extends MCBaseVisitor[Any] {
       )
     )
 
-  override def visitParaList(ctx: ParaListContext) =
+  override def visitParaList(ctx: ParaListContext): List[VarDecl] =
     ctx.paraDecl.asScala.toList.map(_.accept(this).asInstanceOf[VarDecl])
 
   override def visitParaDecl(ctx: ParaDeclContext) =
@@ -53,7 +53,7 @@ class ASTGeneration extends MCBaseVisitor[Any] {
       else ctx.primitiveTypes.accept(this).asInstanceOf[Type]
     )
 
-  override def visitStatement(ctx: StatementContext) =
+  override def visitStatement(ctx: StatementContext): Any =
     ctx.getChild(0).accept(this)
 
   override def visitIfStmt(ctx: IfStmtContext) =
@@ -74,33 +74,33 @@ class ASTGeneration extends MCBaseVisitor[Any] {
       ctx.statement.accept(this).asInstanceOf[Stmt]
     )
 
-  override def visitBreakStmt(ctx: BreakStmtContext) = Break
+  override def visitBreakStmt(ctx: BreakStmtContext): Break.type = Break
 
-  override def visitContinueStmt(ctx: ContinueStmtContext) = Continue
+  override def visitContinueStmt(ctx: ContinueStmtContext): Continue.type = Continue
 
   override def visitReturnStmt(ctx: ReturnStmtContext) =
     Return(if (ctx.expression != null) Option(ctx.expression.accept(this).asInstanceOf[Expr]) else None)
 
-  override def visitExpStmt(ctx: ExpStmtContext) = ctx.expression.accept(this)
+  override def visitExpStmt(ctx: ExpStmtContext): Any = ctx.expression.accept(this)
 
   override def visitBlockStmt(ctx: BlockStmtContext) =
     Block(
-      if (ctx.varDecl != null) ctx.varDecl.asScala.toList.map(_.accept(this).asInstanceOf[Decl]) else List(),
+      if (ctx.varDecl != null) ctx.varDecl.asScala.toList.flatMap(_.accept(this).asInstanceOf[List[Decl]]) else List(),
       if (ctx.statement != null) ctx.statement.asScala.toList.map(_.accept(this).asInstanceOf[Stmt]) else List()
     )
 
-  override def visitTypes(ctx: TypesContext) =
+  override def visitTypes(ctx: TypesContext): Any =
     if (ctx.VOID != null) VoidType
     else if (ctx.LSB != null) ArrayPointerType(ctx.primitiveTypes.accept(this).asInstanceOf[Type])
     else ctx.primitiveTypes.accept(this)
 
-  override def visitPrimitiveTypes(ctx: PrimitiveTypesContext) =
+  override def visitPrimitiveTypes(ctx: PrimitiveTypesContext): Type =
     if (ctx.INT != null) IntType
     else if (ctx.FLOAT != null) FloatType
     else if (ctx.BOOLEAN != null) BoolType
     else StringType
 
-  override def visitExpression(ctx: ExpressionContext) = // Khong co Expression Statement
+  override def visitExpression(ctx: ExpressionContext): Any = // Khong co Expression Statement
     if (ctx.getChildCount == 1) ctx.expression1.accept(this)
     else
       BinaryOp(
@@ -109,7 +109,7 @@ class ASTGeneration extends MCBaseVisitor[Any] {
         ctx.expression.accept(this).asInstanceOf[Expr]
       )
 
-  override def visitExpression1(ctx: Expression1Context) =
+  override def visitExpression1(ctx: Expression1Context): Any =
     if (ctx.getChildCount == 1) ctx.expression2.accept(this)
     else
       BinaryOp(
@@ -118,7 +118,7 @@ class ASTGeneration extends MCBaseVisitor[Any] {
         ctx.expression2.accept(this).asInstanceOf[Expr]
       )
 
-  override def visitExpression2(ctx: Expression2Context) =
+  override def visitExpression2(ctx: Expression2Context): Any =
     if (ctx.getChildCount == 1) ctx.expression3.accept(this)
     else
       BinaryOp(
@@ -127,7 +127,7 @@ class ASTGeneration extends MCBaseVisitor[Any] {
         ctx.expression3.accept(this).asInstanceOf[Expr]
       )
 
-  override def visitExpression3(ctx: Expression3Context) =
+  override def visitExpression3(ctx: Expression3Context): Any =
     if (ctx.getChildCount == 1) ctx.expression4(0).accept(this)
     else
       BinaryOp(
@@ -136,7 +136,7 @@ class ASTGeneration extends MCBaseVisitor[Any] {
         ctx.expression4(1).accept(this).asInstanceOf[Expr]
       )
 
-  override def visitExpression4(ctx: Expression4Context) =
+  override def visitExpression4(ctx: Expression4Context): Any =
     if (ctx.getChildCount == 1) ctx.expression5(0).accept(this)
     else
       BinaryOp(
@@ -148,7 +148,7 @@ class ASTGeneration extends MCBaseVisitor[Any] {
         ctx.expression5(1).accept(this).asInstanceOf[Expr]
       )
 
-  override def visitExpression5(ctx: Expression5Context) =
+  override def visitExpression5(ctx: Expression5Context): Any =
     if (ctx.getChildCount == 1) ctx.expression6.accept(this)
     else
       BinaryOp(
@@ -157,7 +157,7 @@ class ASTGeneration extends MCBaseVisitor[Any] {
         ctx.expression6.accept(this).asInstanceOf[Expr]
       )
 
-  override def visitExpression6(ctx: Expression6Context) =
+  override def visitExpression6(ctx: Expression6Context): Any =
     if (ctx.getChildCount == 1) ctx.expression7.accept(this)
     else
       BinaryOp(
@@ -168,7 +168,7 @@ class ASTGeneration extends MCBaseVisitor[Any] {
         ctx.expression7.accept(this).asInstanceOf[Expr]
       )
 
-  override def visitExpression7(ctx: Expression7Context) =
+  override def visitExpression7(ctx: Expression7Context): Any =
     if (ctx.getChildCount == 1) ctx.expression8.accept(this)
     else
       UnaryOp(
@@ -176,7 +176,7 @@ class ASTGeneration extends MCBaseVisitor[Any] {
         ctx.expression7.accept(this).asInstanceOf[Expr]
       )
 
-  override def visitExpression8(ctx: Expression8Context) =
+  override def visitExpression8(ctx: Expression8Context): Any =
     if (ctx.getChildCount == 1) ctx.expression9.accept(this)
     else
       ArrayCell(
@@ -184,25 +184,25 @@ class ASTGeneration extends MCBaseVisitor[Any] {
         ctx.expression5.accept(this).asInstanceOf[Expr]
       )
 
-  override def visitExpression9(ctx: Expression9Context) =
+  override def visitExpression9(ctx: Expression9Context): Any =
     if (ctx.getChildCount == 1) ctx.expression10.accept(this)
     else
       CallExpr(
         Id(ctx.ID.getText),
-        ctx.expList.accept(this).asInstanceOf[List[Expr]]
+        if (ctx.expList != null) ctx.expList.accept(this).asInstanceOf[List[Expr]] else List()
       )
 
-  override def visitExpression10(ctx: Expression10Context) =
+  override def visitExpression10(ctx: Expression10Context): Any =
     if (ctx.getChildCount == 1) ctx.atomic.accept(this)
     else ctx.expression.accept(this)
 
-  override def visitAtomic(ctx: AtomicContext) =
+  override def visitAtomic(ctx: AtomicContext): Expr =
     if (ctx.ID != null) Id(ctx.ID.getText)
     else if (ctx.INT_LIT != null) IntLiteral(ctx.INT_LIT.getText.toInt)
     else if (ctx.FLT_LIT != null) FloatLiteral(ctx.FLT_LIT.getText.toFloat)
     else if (ctx.BOOL_LIT != null) BooleanLiteral(ctx.BOOL_LIT.getText.toBoolean)
     else StringLiteral(ctx.STR_LIT.getText)
 
-  override def visitExpList(ctx: ExpListContext) =
+  override def visitExpList(ctx: ExpListContext): List[Expr] =
     ctx.expression.asScala.toList.map(_.accept(this).asInstanceOf[Expr])
 }
