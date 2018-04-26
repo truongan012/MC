@@ -39,7 +39,7 @@ class ASTGeneration extends MCBaseVisitor[Any] {
         Id(ctx.ID.getText),
         if (ctx.paraList != null) ctx.paraList.accept(this).asInstanceOf[List[VarDecl]] else List(),
         ctx.types.accept(this).asInstanceOf[Type],
-        ctx.blockStmt.accept(this).asInstanceOf[Stmt],
+        ctx.blockStmt.accept(this).asInstanceOf[Stmt]
       )
     )
 
@@ -85,8 +85,12 @@ class ASTGeneration extends MCBaseVisitor[Any] {
 
   override def visitBlockStmt(ctx: BlockStmtContext) =
     Block(
-      if (ctx.varDecl != null) ctx.varDecl.asScala.toList.flatMap(_.accept(this).asInstanceOf[List[Decl]]) else List(),
-      if (ctx.statement != null) ctx.statement.asScala.toList.map(_.accept(this).asInstanceOf[Stmt]) else List()
+      if (ctx.varDecl != null)
+        ctx.varDecl.asScala.toList.flatMap(_.accept(this).asInstanceOf[List[Decl]])
+      else List(),
+      if (ctx.statement != null)
+        ctx.statement.asScala.toList.map(_.accept(this).asInstanceOf[Stmt])
+      else List()
     )
 
   override def visitTypes(ctx: TypesContext): Any =
@@ -205,4 +209,5 @@ class ASTGeneration extends MCBaseVisitor[Any] {
 
   override def visitExpList(ctx: ExpListContext): List[Expr] =
     ctx.expression.asScala.toList.map(_.accept(this).asInstanceOf[Expr])
+
 }
