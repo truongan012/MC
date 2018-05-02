@@ -416,23 +416,6 @@ class CheckerSuite extends FunSuite with TestChecker {
     val expect = UnreachableStatement(BinaryOp("=", Id("d"), IntLiteral(8))).getMessage
     assert(checkCkr(input, expect, 30))
   }
-  test("Unreachable statement: if always false condition") {
-    val input =
-      """int a, b;
-        |float c[10];
-        |void main(){
-        |  do
-        |  a = a + 1;
-        |  while a <= test(6);
-        |}
-        |int test(int d){
-        | if(false) return d;
-        | return 8;
-        |}
-      """.stripMargin
-    val expect = UnreachableStatement(If(BooleanLiteral(false), Return(Some(Id("d"))), None)).getMessage
-    assert(checkCkr(input, expect, 31))
-  }
   test("Unreachable Function") {
     val input =
       """int a, b;
@@ -448,7 +431,7 @@ class CheckerSuite extends FunSuite with TestChecker {
         |}
       """.stripMargin
     val expect = UnreachableFunction("test").getMessage
-    assert(checkCkr(input, expect, 32))
+    assert(checkCkr(input, expect, 31))
   }
 
 }

@@ -48,7 +48,7 @@ class StaticChecker(ast: AST) extends MyBaseVistor with MyUtils {
     //Check function not return; break, continue not in loop, unreachable statement
     val otherchecker = new OtherChecker().visit(ast, null)
 
-    // check unreachable function
+    //Check unreachable function
     val envWoBuildInFunc = getEnvWoBuildInFunc(globalChecker.asInstanceOf[List[List[Symbol]]].flatten)
     val unReachableChecker = new UnreachableFuncChecker().visit(ast, envWoBuildInFunc)
   }
@@ -282,8 +282,8 @@ class OtherChecker extends MyBaseVistor with MyUtils {
   override def visitIf(ast: If, c: Any): Any = {
     val thenCase = ast.thenStmt.accept(this, c).asInstanceOf[Boolean]
     val elseCase = if (ast.elseStmt != None) ast.elseStmt.get.accept(this, c).asInstanceOf[Boolean] else false
-    if (ast.expr.isInstanceOf[BooleanLiteral])
-      if (ast.expr.asInstanceOf[BooleanLiteral].value == false && ast.elseStmt == None) throw UnreachableStatement(ast)
+//    if (ast.expr.isInstanceOf[BooleanLiteral])
+//      if (ast.expr.asInstanceOf[BooleanLiteral].value == false && ast.elseStmt == None) throw UnreachableStatement(ast)
     thenCase && elseCase
   }
 
