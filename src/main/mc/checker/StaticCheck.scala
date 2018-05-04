@@ -2,8 +2,8 @@ package mc.checker
 
 /**
   * @author nhphung
-  * Student name: Lam Truong An
-  * Student ID: 1570733
+  *         Student name: Lam Truong An
+  *         Student ID: 1570733
   */
 
 import mc.parser._
@@ -114,19 +114,19 @@ class TypeChecker extends MyBaseVistor with MyUtils {
   override def visitVarDecl(ast: VarDecl, c: Any): Any = {
     val env = c.asInstanceOf[List[List[Symbol]]]
     val curEnv = env.head
-    lookupToInsert(convertToSymbol(ast), curEnv, Variable) :: env
+    lookupToInsert(convertToSymbol(ast), curEnv, Variable) :: env.tail
   }
 
   override def visitBlock(ast: Block, c: Any): Any = {
-    val env = c.asInstanceOf[(List[List[Symbol]],Type)]._1
-    val newEnv =
+    val (env, ret) = c.asInstanceOf[(List[List[Symbol]], Type)]
+    val newEnv = List[Symbol]() :: env
+    val localEnv =
       if (!ast.decl.isEmpty)
-        ast.decl.foldLeft(env)((el, d) =>
-          d.accept(this, env).asInstanceOf[List[List[Symbol]]]) :: env
-      else List[Symbol]() :: env
+        ast.decl.foldLeft(newEnv)((el, d) =>
+          d.accept(this, el).asInstanceOf[List[List[Symbol]]])
+      else newEnv
     if (!ast.decl.isEmpty)
-      ast.stmt.map(_.accept(this, newEnv))
-
+      ast.stmt.map(_.accept(this, (localEnv, ret)))
     c
   }
 
@@ -214,7 +214,7 @@ class TypeChecker extends MyBaseVistor with MyUtils {
   }
 
   override def visitCallExpr(ast: CallExpr, c: Any): Any = {
-    val env = c.asInstanceOf[(List[List[Symbol]],Type)]._1.flatten
+    val env = c.asInstanceOf[(List[List[Symbol]], Type)]._1.flatten
     val func = lookupToPick(ast.method.name, env, Function)
     val paraTypes = func.typ.asInstanceOf[FunctionType].input
     val argTypes = ast.params.map(_.accept(this, c)).asInstanceOf[List[Type]]
@@ -243,7 +243,7 @@ class TypeChecker extends MyBaseVistor with MyUtils {
   }
 
   override def visitId(ast: Id, c: Any): Any = {
-    val env = c.asInstanceOf[(List[List[Symbol]],Type)]._1.flatten
+    val env = c.asInstanceOf[(List[List[Symbol]], Type)]._1.flatten
     val id = lookupToPick(ast.name, env, Identifier)
     id.typ
   }
@@ -282,8 +282,8 @@ class OtherChecker extends MyBaseVistor with MyUtils {
   override def visitIf(ast: If, c: Any): Any = {
     val thenCase = ast.thenStmt.accept(this, c).asInstanceOf[Boolean]
     val elseCase = if (ast.elseStmt != None) ast.elseStmt.get.accept(this, c).asInstanceOf[Boolean] else false
-//    if (ast.expr.isInstanceOf[BooleanLiteral])
-//      if (ast.expr.asInstanceOf[BooleanLiteral].value == false && ast.elseStmt == None) throw UnreachableStatement(ast)
+    //    if (ast.expr.isInstanceOf[BooleanLiteral])
+    //      if (ast.expr.asInstanceOf[BooleanLiteral].value == false && ast.elseStmt == None) throw UnreachableStatement(ast)
     thenCase && elseCase
   }
 
