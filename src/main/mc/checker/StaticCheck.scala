@@ -12,16 +12,12 @@ import java.io.{File, PrintWriter}
 
 import com.sun.org.apache.xalan.internal.xsltc.dom.AdaptiveResultTreeImpl
 
-//import mc.codegen.Val
+import mc.codegen._
 import org.antlr.v4.runtime.ANTLRFileStream
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree._
 
 import scala.collection.JavaConverters._
-
-case class Symbol(name: String, typ: Type)
-
-case class FunctionType(input: List[Type], output: Type) extends Type
 
 class StaticChecker(ast: AST) extends MyBaseVistor with MyUtils {
   val buidInFunc = List(
@@ -149,8 +145,7 @@ class TypeChecker extends MyBaseVistor with MyUtils {
   }
 
   override def visitReturn(ast: Return, c: Any): Any = {
-    val (tempEnv, retType) = c.asInstanceOf[(List[List[Symbol]], Type)]
-    val env = tempEnv.flatten
+    val retType = c.asInstanceOf[(List[List[Symbol]], Type)]._2
     val expType = if (ast.expr != None) ast.expr.get.accept(this, c).asInstanceOf[Type] else None
     //println("Ret: "+ retType + "--" + "Exp: " +expType)
     (retType, expType) match {
@@ -216,7 +211,7 @@ class TypeChecker extends MyBaseVistor with MyUtils {
   override def visitCallExpr(ast: CallExpr, c: Any): Any = {
     val env = c.asInstanceOf[(List[List[Symbol]], Type)]._1.flatten
     val func = lookupToPick(ast.method.name, env, Function)
-    val paraTypes = func.typ.asInstanceOf[FunctionType].input
+    val paraTypes = func.typ.asInstanceOf[FuncType].partype
     val argTypes = ast.params.map(_.accept(this, c)).asInstanceOf[List[Type]]
     if (argTypes.length != paraTypes.length) throw TypeMismatchInExpression(ast)
     paraTypes.zip(argTypes).map(_ match {
@@ -239,7 +234,7 @@ class TypeChecker extends MyBaseVistor with MyUtils {
       case _ => throw TypeMismatchInExpression(ast)
     }
     )
-    func.typ.asInstanceOf[FunctionType].output
+    func.typ.asInstanceOf[FuncType].rettype
   }
 
   override def visitId(ast: Id, c: Any): Any = {
@@ -316,7 +311,7 @@ class OtherChecker extends MyBaseVistor with MyUtils {
 class UnreachableFuncChecker extends BaseVisitor with MyUtils {
 
   override def visitProgram(ast: Program, c: Any): Any = {
-    val env = c.asInstanceOf[List[Symbol]].filter(_.typ.isInstanceOf[FunctionType])
+    val env = c.asInstanceOf[List[Symbol]].filter(_.typ.isInstanceOf[FuncType])
       .map(_.name).asInstanceOf[List[String]]
 
     val funcInUse = ast.decl.filter(_.isInstanceOf[FuncDecl]).foldLeft(List[String]())((el, d) =>
@@ -416,7 +411,7 @@ class UnreachableFuncChecker extends BaseVisitor with MyUtils {
 
 trait MyUtils extends Utils {
   def checkNoEntryPoint(ls: List[Symbol]) = {
-    if (!ls.exists(s => s.equals(Symbol("main", FunctionType(List(), VoidType)))))
+    if (!ls.exists(s => s.equals(Symbol("main", FuncType(List(), VoidType),null))))
       throw NoEntryPoint
   }
 
@@ -468,14 +463,15 @@ class MyBaseVistor extends BaseVisitor with MyUtils {
   def convertToSymbol(decl: Decl): Symbol = {
     decl match {
       case VarDecl(id, typ) =>
-        Symbol(id.name, typ)
+        Symbol(id.name, typ, null)
       case FuncDecl(id, paras, ret, _) =>
         Symbol(
           id.name,
-          FunctionType(
+          FuncType(
             paras.map(_.varType.accept(this, null).asInstanceOf[Type]),
             ret.accept(this, null).asInstanceOf[Type]
-          )
+          ),
+          null
         )
     }
   }
